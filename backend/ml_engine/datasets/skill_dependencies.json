@@ -1,0 +1,16 @@
+[
+  {"skill": "python", "prerequisite": [], "difficulty": "Easy", "eta_weeks": 2, "level": "Foundation"},
+  {"skill": "statistics", "prerequisite": [], "difficulty": "Easy", "eta_weeks": 3, "level": "Foundation"},
+  {"skill": "sql", "prerequisite": [], "difficulty": "Easy", "eta_weeks": 2, "level": "Foundation"},
+  {"skill": "machine learning", "prerequisite": ["python", "statistics"], "difficulty": "Medium", "eta_weeks": 4, "level": "Core"},
+  {"skill": "scikit-learn", "prerequisite": ["python", "machine learning"], "difficulty": "Medium", "eta_weeks": 2, "level": "Core"},
+  {"skill": "deep learning", "prerequisite": ["machine learning", "python"], "difficulty": "Hard", "eta_weeks": 4, "level": "Advanced"},
+  {"skill": "nlp", "prerequisite": ["python", "machine learning"], "difficulty": "Hard", "eta_weeks": 3, "level": "Advanced"},
+  {"skill": "model deployment", "prerequisite": ["python"], "difficulty": "Medium", "eta_weeks": 3, "level": "Advanced"},
+  {"skill": "docker", "prerequisite": [], "difficulty": "Medium", "eta_weeks": 2, "level": "Core"},
+  {"skill": "kubernetes", "prerequisite": ["docker"], "difficulty": "Hard", "eta_weeks": 3, "level": "Advanced"},
+  {"skill": "django", "prerequisite": ["python"], "difficulty": "Medium", "eta_weeks": 2, "level": "Core"},
+  {"skill": "rest", "prerequisite": ["django"], "difficulty": "Medium", "eta_weeks": 2, "level": "Core"},
+  {"skill": "react", "prerequisite": ["javascript"], "difficulty": "Medium", "eta_weeks": 3, "level": "Core"},
+  {"skill": "javascript", "prerequisite": [], "difficulty": "Easy", "eta_weeks": 3, "level": "Foundation"}
+]

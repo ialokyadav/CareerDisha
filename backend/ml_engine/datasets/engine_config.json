@@ -1,0 +1,10 @@
+{
+    "adaptive_engine": {
+        "upgrade_threshold": 0.8,
+        "downgrade_threshold": 0.4
+    },
+    "skill_gap_analyzer": {
+        "weak_threshold": 0.7,
+        "missing_threshold": 0.4
+    }
+}

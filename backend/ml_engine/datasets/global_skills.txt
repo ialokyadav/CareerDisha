@@ -1,0 +1,181 @@
+python
+python3
+core python
+advanced python
+oops python
+oop python
+python scripting
+java
+core java
+advanced java
+spring
+spring boot
+j2ee
+c
+c programming
+pointers
+structures
+c++
+oops c++
+stl
+templates
+javascript
+js
+es6
+typescript
+go
+golang
+rust
+kotlin
+swift
+data structures
+algorithms
+dsa
+time complexity
+recursion
+dynamic programming
+greedy algorithms
+arrays
+linked list
+stack
+queue
+tree
+graph
+hashing
+html
+html5
+css
+css3
+flexbox
+grid
+dom
+ajax
+fetch api
+react
+reactjs
+redux
+hooks
+angular
+vue
+nextjs
+nodejs
+node.js
+express
+rest api
+graphql
+django
+flask
+fastapi
+bootstrap
+tailwind
+material ui
+data analysis
+data analytics
+pandas
+numpy
+matplotlib
+seaborn
+statistics
+probability
+hypothesis testing
+eda
+exploratory data analysis
+data cleaning
+data preprocessing
+feature engineering
+data visualization
+power bi
+tableau
+excel analytics
+machine learning
+ml algorithms
+supervised learning
+unsupervised learning
+regression
+linear regression
+logistic regression
+classification
+clustering
+kmeans
+decision tree
+random forest
+svm
+naive bayes
+model evaluation
+cross validation
+feature selection
+hyperparameter tuning
+scikit-learn
+sklearn
+artificial intelligence
+ai
+deep learning
+neural networks
+cnn
+convolutional neural network
+rnn
+lstm
+gru
+transformers
+attention mechanism
+nlp
+natural language processing
+computer vision
+image processing
+opencv
+pytorch
+tensorflow
+keras
+cloud computing
+aws
+ec2
+s3
+lambda
+rds
+vpc
+azure
+gcp
+docker
+kubernetes
+ci/cd
+jenkins
+github actions
+terraform
+ansible
+linux
+bash scripting
+monitoring
+logging
+database
+dbms
+sql
+mysql
+postgresql
+oracle
+nosql
+mongodb
+redis
+cassandra
+indexes
+joins
+normalization
+transactions
+acid properties
+data modeling
+schema design
+cyber security
+information security
+network security
+application security
+penetration testing
+ethical hacking
+malware analysis
+vulnerability assessment
+cryptography
+encryption
+hashing
+firewall
+ids
+ips
+owasp
+security testing

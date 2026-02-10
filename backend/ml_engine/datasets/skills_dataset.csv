@@ -1,0 +1,11 @@
+text,skills
+"python developer with django rest api and sqlite","python|django|rest|sqlite"
+"data analysis using pandas numpy and visualization with matplotlib","python|pandas|numpy|matplotlib|data analysis"
+"machine learning with scikit learn feature engineering and model evaluation","python|scikit-learn|machine learning|feature engineering|model evaluation"
+"cloud infrastructure on aws with docker and kubernetes","aws|docker|kubernetes|cloud"
+"devops engineer with ci cd and linux scripting","devops|ci/cd|linux|scripting"
+"frontend developer with react html css javascript","react|html|css|javascript|frontend"
+"backend services in node and mongodb with api design","node|mongodb|api design|backend"
+"mobile app development in android kotlin","android|kotlin|mobile"
+"cyber security analyst with network security and vulnerability assessment","cyber security|network security|vulnerability assessment"
+"full stack developer with react django postgres","react|django|postgres|full stack"
