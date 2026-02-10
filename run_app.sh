@@ -22,11 +22,11 @@ if ! pgrep -x "mongod" > /dev/null; then
     echo -e "          Ensure your MongoDB instance is active if connection errors occur."
 fi
 
-# 1. Start Backend
-echo -e "\033[1;32m[Backend]\033[0m Starting Django server on http://127.0.0.1:8000"
+# 1. Start Backend (production-like via gunicorn)
+echo -e "\033[1;32m[Backend]\033[0m Starting Gunicorn on http://127.0.0.1:8000"
 cd "backend" || { echo "Backend directory not found"; exit 1; }
 source "../.venv/bin/activate" || { echo "Virtual environment not found at ../.venv"; exit 1; }
-python manage.py runserver 8000 > /dev/null 2>&1 &
+gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 2 > /dev/null 2>&1 &
 BACKEND_PID=$!
 cd ..
 
