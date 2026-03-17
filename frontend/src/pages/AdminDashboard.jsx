@@ -10,6 +10,7 @@ export default function AdminDashboard() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const [roles, setRoles] = useState([]);
+    const [userContacts, setUserContacts] = useState([]);
 
     // Skill Form State
     const [skillText, setSkillText] = useState("");
@@ -34,12 +35,14 @@ export default function AdminDashboard() {
 
     const fetchStatus = async () => {
         try {
-            const [statusData, configData] = await Promise.all([
+            const [statusData, configData, contactsData] = await Promise.all([
                 api.getTrainingStatus(),
-                api.getEngineConfig()
+                api.getEngineConfig(),
+                api.adminUserContacts()
             ]);
             setStatus(statusData);
             setConfig(configData);
+            setUserContacts(Array.isArray(contactsData?.users) ? contactsData.users : []);
             setError("");
         } catch (err) {
             setError(err.message || "Failed to fetch dashboard data");
@@ -266,6 +269,49 @@ export default function AdminDashboard() {
                         <p className="muted small">Total Dependency Rules</p>
                         <p className="large">{status?.dependencies?.total || 0}</p>
                     </div>
+                </div>
+            </div>
+
+            <div className="card" style={{ marginTop: "24px" }}>
+                <h3>User Contact Directory (From Resume)</h3>
+                <p className="muted small" style={{ marginBottom: "12px" }}>
+                    Shows latest email and phone captured from each user's resume. Country code is preserved when present in resume text.
+                </p>
+                <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead>
+                            <tr>
+                                <th style={{ textAlign: "left", padding: "10px", borderBottom: "1px solid var(--stroke)" }}>Username</th>
+                                <th style={{ textAlign: "left", padding: "10px", borderBottom: "1px solid var(--stroke)" }}>Email</th>
+                                <th style={{ textAlign: "left", padding: "10px", borderBottom: "1px solid var(--stroke)" }}>Phone</th>
+                                <th style={{ textAlign: "left", padding: "10px", borderBottom: "1px solid var(--stroke)" }}>Resume</th>
+                                <th style={{ textAlign: "left", padding: "10px", borderBottom: "1px solid var(--stroke)" }}>Uploaded At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {userContacts.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} style={{ padding: "12px" }} className="muted">
+                                        No contact data available.
+                                    </td>
+                                </tr>
+                            )}
+                            {userContacts.map((item) => (
+                                <tr key={item.user_id}>
+                                    <td style={{ padding: "10px", borderBottom: "1px solid var(--stroke)" }}>
+                                        {item.username}
+                                        {item.is_admin ? " (Admin)" : ""}
+                                    </td>
+                                    <td style={{ padding: "10px", borderBottom: "1px solid var(--stroke)" }}>{item.email}</td>
+                                    <td style={{ padding: "10px", borderBottom: "1px solid var(--stroke)" }}>{item.phone}</td>
+                                    <td style={{ padding: "10px", borderBottom: "1px solid var(--stroke)" }}>{item.resume_filename || "-"}</td>
+                                    <td style={{ padding: "10px", borderBottom: "1px solid var(--stroke)" }}>
+                                        {item.resume_uploaded_at ? new Date(item.resume_uploaded_at).toLocaleString() : "-"}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

@@ -1,0 +1,114 @@
+{
+  "rows_total": 500,
+  "rows_analyzed": 500,
+  "top_target_roles": [
+    [
+      "Cloud Architect",
+      98
+    ],
+    [
+      "Software Developer",
+      92
+    ],
+    [
+      "Data Scientist",
+      85
+    ],
+    [
+      "Cybersecurity Expert",
+      78
+    ],
+    [
+      "Business Analyst",
+      77
+    ],
+    [
+      "AI Engineer",
+      70
+    ]
+  ],
+  "roles_without_required_skill_map": [],
+  "top_missing_skills": [
+    [
+      "python",
+      260
+    ],
+    [
+      "data analysis",
+      175
+    ],
+    [
+      "machine learning",
+      173
+    ],
+    [
+      "sql",
+      145
+    ],
+    [
+      "cloud computing",
+      114
+    ],
+    [
+      "blockchain",
+      112
+    ],
+    [
+      "java",
+      109
+    ],
+    [
+      "cybersecurity",
+      96
+    ],
+    [
+      "api design",
+      92
+    ],
+    [
+      "git",
+      92
+    ],
+    [
+      "oop",
+      92
+    ],
+    [
+      "data visualization",
+      85
+    ],
+    [
+      "statistics",
+      85
+    ],
+    [
+      "communication",
+      77
+    ],
+    [
+      "documentation",
+      77
+    ],
+    [
+      "excel",
+      77
+    ],
+    [
+      "problem-solving",
+      77
+    ],
+    [
+      "requirements gathering",
+      77
+    ],
+    [
+      "stakeholder management",
+      77
+    ],
+    [
+      "deep learning",
+      70
+    ]
+  ],
+  "output_csv": "/Users/ialokyadav/Desktop/Resume parser AI/backend/ml_engine/datasets/dma_skill_gap_analysis.csv"
+}

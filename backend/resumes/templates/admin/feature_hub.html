@@ -1,0 +1,47 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Feature Hub</h1>
+  <p>Central navigation for admin tools, model views, and API endpoints.</p>
+
+  <div class="module" style="margin-bottom:16px;">
+    <h2>Django Admin Models</h2>
+    <ul>
+      <li><a href="/admin/auth/user/">Users (with resume email/phone columns)</a></li>
+      <li><a href="/admin/resumes/mongoresume/">Mongo Resumes</a></li>
+      <li><a href="/admin/resumes/mongoextraction/">Mongo Skill Extractions</a></li>
+      <li><a href="/admin/resumes/mongoprediction/">Mongo Role Predictions</a></li>
+    </ul>
+  </div>
+
+  <div class="module" style="margin-bottom:16px;">
+    <h2>Feature Pages (Frontend)</h2>
+    <ul>
+      <li><a href="http://localhost:5173/dashboard" target="_blank" rel="noopener noreferrer">Dashboard</a></li>
+      <li><a href="http://localhost:5173/resume" target="_blank" rel="noopener noreferrer">Resume Upload</a></li>
+      <li><a href="http://localhost:5173/skill-gap" target="_blank" rel="noopener noreferrer">Skill Gap</a></li>
+      <li><a href="http://localhost:5173/roadmap" target="_blank" rel="noopener noreferrer">Roadmap</a></li>
+      <li><a href="http://localhost:5173/tests" target="_blank" rel="noopener noreferrer">Test Center</a></li>
+      <li><a href="http://localhost:5173/analytics" target="_blank" rel="noopener noreferrer">Analytics</a></li>
+    </ul>
+  </div>
+
+  <div class="module" style="margin-bottom:16px;">
+    <h2>Core API Endpoints</h2>
+    <ul>
+      <li><a href="/api/auth/profile/" target="_blank" rel="noopener noreferrer">/api/auth/profile/</a></li>
+      <li><a href="/api/analytics/dashboard/" target="_blank" rel="noopener noreferrer">/api/analytics/dashboard/</a></li>
+      <li><a href="/api/resumes/latest-extraction/" target="_blank" rel="noopener noreferrer">/api/resumes/latest-extraction/</a></li>
+      <li><a href="/api/resumes/admin-user-contacts/" target="_blank" rel="noopener noreferrer">/api/resumes/admin-user-contacts/</a></li>
+      <li><a href="/api/resumes/training-status/" target="_blank" rel="noopener noreferrer">/api/resumes/training-status/</a></li>
+      <li><a href="/api/assessments/roles/" target="_blank" rel="noopener noreferrer">/api/assessments/roles/</a></li>
+      <li><a href="/api/roadmap/progress/?target_role=Machine%20Learning%20Engineer" target="_blank" rel="noopener noreferrer">/api/roadmap/progress/?target_role=...</a></li>
+    </ul>
+    <p style="margin-top:8px;">
+      Note: most endpoints require JWT auth and are best used through the frontend or API client.
+    </p>
+  </div>
+</div>
+{% endblock %}

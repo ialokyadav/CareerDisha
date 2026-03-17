@@ -10,7 +10,6 @@ import SkillGap from "./pages/SkillGap.jsx";
 import Roadmap from "./pages/Roadmap.jsx";
 import TestCenter from "./pages/TestCenter.jsx";
 import Analytics from "./pages/Analytics.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 export default function App() {
   return (
@@ -26,7 +25,6 @@ export default function App() {
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/tests" element={<TestCenter />} />
         <Route path="/analytics" element={<Analytics />} />
-        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </Shell>
   );

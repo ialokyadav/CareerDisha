@@ -19,9 +19,6 @@ export default function SkillGap() {
     api.listRoles()
       .then(data => {
         setRoles(data.roles);
-        if (data.roles.length > 0) {
-          setTargetRole(data.roles[0]);
-        }
       })
       .catch(err => setError("Failed to load roles: " + err.message));
 
@@ -40,28 +37,58 @@ export default function SkillGap() {
       });
   }, []);
 
+  // Auto-analyze when target role changes
+  useEffect(() => {
+    if (skills && (targetRole || predictedRole)) {
+      handleAnalyze();
+    }
+  }, [targetRole, predictedRole]);
+
   const handleAnalyze = async () => {
     const list = skills
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
     if (!list.length) {
-      setError("Enter skills or use your resume extraction.");
-      return;
+      return; // customized checking to avoid error on initial load or auto-trigger
     }
-    setError("");
-    setLoading(true);
-    try {
-      const targetResponse = await api.skillGap({ skills: list, target_role: targetRole });
-      setTargetResult(targetResponse);
 
-      if (predictedRole && predictedRole !== targetRole) {
-        const predictedResponse = await api.skillGap({ skills: list, target_role: predictedRole });
+    // Only set loading if not already loading to prevent flicker or infinite loops if improper
+    setLoading(true);
+    // Clear old error
+    setError("");
+
+    try {
+      if (targetRole) {
+        const targetResponse = await api.skillGap({ skills: list, target_role: targetRole });
+        setTargetResult(targetResponse);
+      } else {
+        setTargetResult(null);
+      }
+
+      // Determine predicted role if not set
+      let currentPredictedRole = predictedRole;
+      if (!currentPredictedRole) {
+        try {
+          const predictionData = await api.predictRole({ skills: list });
+          currentPredictedRole = predictionData.predicted_role;
+          setPredictedRole(currentPredictedRole);
+        } catch (e) {
+          console.warn("Could not predict role on the fly:", e);
+        }
+      }
+
+      // Always fetch predicted result if we have a role
+      if (currentPredictedRole) {
+        const predictedResponse = await api.skillGap({ skills: list, target_role: currentPredictedRole });
         setPredictedResult(predictedResponse);
       } else {
         setPredictedResult(null);
       }
     } catch (err) {
+      console.error(err);
+      // setError(err.message); // Optional: don't show error on auto-trigger to be less annoying? 
+      // Better to show it but maybe different UX. For now standard error.
       setError(err.message);
     } finally {
       setLoading(false);
@@ -85,6 +112,7 @@ export default function SkillGap() {
           <label>
             Target role
             <select value={targetRole} onChange={(e) => setTargetRole(e.target.value)}>
+              <option value="">-- No target role --</option>
               {roles.map((role) => (
                 <option key={role} value={role}>{role}</option>
               ))}
@@ -170,6 +198,16 @@ export default function SkillGap() {
             </div>
 
             <div style={{ marginTop: "24px" }}>
+              <p className="eyebrow" style={{ color: "var(--success)" }}>Matched Skills</p>
+              <div className="pill-row">
+                {predictedResult.matched_skills.map(s => (
+                  <span key={s} className="pill success" style={{ backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#15803d" }}>{s}</span>
+                ))}
+                {predictedResult.matched_skills.length === 0 && <p className="muted">No matching skills found.</p>}
+              </div>
+            </div>
+
+            <div style={{ marginTop: "24px" }}>
               <p className="eyebrow" style={{ color: "var(--danger)" }}>Missing Skills & Knowledge</p>
               <div className="pill-row">
                 {predictedResult.missing_skills.map(s => (
@@ -180,7 +218,7 @@ export default function SkillGap() {
             </div>
 
             <button
-              className="secondary-btn"
+              className="primary-btn"
               onClick={() => handleGoToRoadmap(predictedRole, skills)}
               style={{ width: "100%", marginTop: "24px" }}
             >

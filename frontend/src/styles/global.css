@@ -68,6 +68,22 @@ h3 {
   display: grid;
   place-items: center;
   font-weight: 700;
+  overflow: hidden;
+}
+
+.logo-mark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logo-mark-fallback {
+  display: none;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
 }
 
 .logo-title {
@@ -168,6 +184,23 @@ h3 {
   gap: 12px;
 }
 
+.dashboard-actions {
+  flex-wrap: wrap;
+}
+
+.dashboard-action-btn {
+  min-width: 170px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-action-btn.ghost-btn {
+  color: var(--ink);
+  border-color: rgba(21, 21, 21, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+}
+
 .stat-card h3 {
   font-size: 2rem;
 }
@@ -191,7 +224,9 @@ h3 {
 }
 
 .primary-btn,
-.ghost-btn {
+.ghost-btn,
+.secondary-btn,
+.forgot-password-btn {
   border: none;
   padding: 12px 18px;
   border-radius: 12px;
@@ -218,6 +253,31 @@ h3 {
 
 .ghost-btn:hover {
   transform: translateY(-2px);
+}
+
+.secondary-btn {
+  background: #fff;
+  border: 1px solid rgba(45, 93, 123, 0.35);
+  color: var(--secondary);
+  box-shadow: 0 8px 18px rgba(45, 93, 123, 0.12);
+}
+
+.secondary-btn:hover {
+  transform: translateY(-2px);
+}
+
+.forgot-password-btn {
+  width: 100%;
+  margin-top: 12px;
+  background: linear-gradient(120deg, rgba(228, 87, 46, 0.15), rgba(243, 166, 56, 0.2));
+  border: 1px solid rgba(228, 87, 46, 0.45);
+  color: #8f2d13;
+  box-shadow: 0 10px 22px rgba(228, 87, 46, 0.18);
+}
+
+.forgot-password-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(228, 87, 46, 0.22);
 }
 
 .form {
@@ -340,6 +400,14 @@ textarea {
   backdrop-filter: blur(6px);
 }
 
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+  margin: 0 0 10px 0;
+}
+
 .question-block {
   padding: 16px 0;
   border-bottom: 1px solid var(--stroke);
@@ -391,6 +459,10 @@ textarea {
   .grid-2,
   .roadmap-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-action-btn {
+    min-width: 150px;
   }
 }
 
@@ -493,4 +565,63 @@ textarea {
 .pill.primary {
   background: var(--primary);
   color: #fff;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: var(--card);
+  padding: 40px;
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

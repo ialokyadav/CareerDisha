@@ -12,6 +12,7 @@ from ml_engine.skill_gap_analyzer import analyze_skill_gap
 from ml_engine.adaptive_engine import adjust_difficulty
 from ml_engine.role_predictor import ALLOWED_ROLES
 from analytics.performance_tracker import record_attempt, get_skill_accuracy_summary
+from roadmap.progress_utils import get_progress, apply_phase_result, apply_skill_results
 
 
 class SeedQuestionBankView(APIView):
@@ -49,6 +50,7 @@ class GenerateTestView(APIView):
 
     def post(self, request):
         target_role = request.data.get("target_role")
+        mode = request.data.get("mode", "gap_based")
         skills = request.data.get("skills", [])
         missing_skills = request.data.get("missing_skills", [])
         weak_skills = request.data.get("weak_skills", [])
@@ -58,30 +60,86 @@ class GenerateTestView(APIView):
         if not target_role:
             return Response({"error": "target_role required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not missing_skills or not weak_skills:
-            if not skills:
-                return Response({"error": "skills required to derive skill gap"}, status=status.HTTP_400_BAD_REQUEST)
-            performance = get_skill_accuracy_summary(request.user.id)
-            gap = analyze_skill_gap(skills, target_role, performance=performance)
-            missing_skills = gap["missing_skills"]
-            weak_skills = gap["weak_skills"]
-            required_skills = gap["required_skills"]
-        else:
-            required_skills = []
+        db = get_db()
+        db["users"].update_one(
+            {"user_id": request.user.id},
+            {
+                "$set": {
+                    "last_target_role": target_role,
+                    "last_target_role_updated_at": datetime.utcnow(),
+                },
+                "$setOnInsert": {"created_at": datetime.utcnow()},
+            },
+            upsert=True,
+        )
+        test_meta = {"mode": mode}
+        skills_priority = []
 
-        skills_priority = build_skill_priority(missing_skills, weak_skills, required_skills)
+        if mode == "roadmap_step":
+            roadmap_doc = db["roadmaps"].find_one(
+                {"user_id": request.user.id, "target_role": target_role},
+                sort=[("created_at", -1)],
+            )
+            if not roadmap_doc:
+                return Response({"error": "roadmap not found for target_role"}, status=status.HTTP_404_NOT_FOUND)
+
+            progress_doc = get_progress(db, request.user.id, target_role)
+            if not progress_doc:
+                return Response({"error": "roadmap progress not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            active_phase = progress_doc.get("active_phase")
+            if not active_phase:
+                return Response({"error": "roadmap already completed"}, status=status.HTTP_400_BAD_REQUEST)
+
+            phase_skills = []
+            for phase in roadmap_doc.get("roadmap", {}).get("roadmap", []):
+                if phase.get("phase") == active_phase:
+                    phase_skills = [s.get("name", "").strip().lower() for s in phase.get("skills", []) if s.get("name")]
+                    break
+
+            if not phase_skills:
+                return Response({"error": "no skills found for active roadmap step"}, status=status.HTTP_404_NOT_FOUND)
+
+            skills_priority = list(dict.fromkeys(phase_skills))
+            test_meta["roadmap_phase"] = active_phase
+
+        elif mode == "existing_skills":
+            if not skills:
+                skill_doc = db["skill_extractions"].find_one(
+                    {"user_id": request.user.id},
+                    sort=[("created_at", -1)],
+                )
+                skills = [s.get("skill", "").strip().lower() for s in skill_doc.get("skills", [])] if skill_doc else []
+            skills_priority = list(dict.fromkeys([s.strip().lower() for s in skills if str(s).strip()]))
+            if not skills_priority:
+                return Response({"error": "no existing skills found for test"}, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            if not missing_skills or not weak_skills:
+                if not skills:
+                    return Response({"error": "skills required to derive skill gap"}, status=status.HTTP_400_BAD_REQUEST)
+                performance = get_skill_accuracy_summary(request.user.id)
+                gap = analyze_skill_gap(skills, target_role, performance=performance)
+                missing_skills = gap["missing_skills"]
+                weak_skills = gap["weak_skills"]
+                required_skills = gap["required_skills"]
+            else:
+                required_skills = []
+
+            skills_priority = build_skill_priority(missing_skills, weak_skills, required_skills)
+
         questions = generate_test(skills_priority, base_difficulty=base_difficulty, total_questions=total_questions)
 
         if not questions:
             return Response({"error": "no questions available"}, status=status.HTTP_404_NOT_FOUND)
 
-        db = get_db()
         test_doc = {
             "user_id": request.user.id,
             "target_role": target_role,
             "skills_priority": skills_priority,
             "difficulty": base_difficulty,
             "questions": [str(q["_id"]) for q in questions],
+            "meta": test_meta,
             "created_at": datetime.utcnow(),
         }
         test_id = db["tests"].insert_one(test_doc).inserted_id
@@ -90,7 +148,15 @@ class GenerateTestView(APIView):
             q["_id"] = str(q["_id"])
             q.pop("correct_answer", None)
 
-        return Response({"test_id": str(test_id), "questions": questions})
+        return Response(
+            {
+                "test_id": str(test_id),
+                "questions": questions,
+                "mode": mode,
+                "skills_covered": skills_priority,
+                "roadmap_phase": test_meta.get("roadmap_phase"),
+            }
+        )
 
 
 class SubmitTestView(APIView):
@@ -124,6 +190,38 @@ class SubmitTestView(APIView):
 
         db["tests"].update_one({"_id": test_doc["_id"]}, {"$set": {"last_result": result, "next_difficulty": next_difficulty}})
 
+        phase_result = None
+        test_meta = test_doc.get("meta", {})
+        # Always persist skill-level learning outcomes so roadmap pending skills can
+        # automatically move to completed after successful tests.
+        progress_doc = get_progress(db, request.user.id, test_doc.get("target_role"))
+        if progress_doc:
+            apply_skill_results(
+                db=db,
+                progress_doc=progress_doc,
+                skill_stats=result.get("skill_stats", {}),
+                pass_threshold=float(request.data.get("skill_pass_threshold", 0.75)),
+            )
+
+        if test_meta.get("mode") == "roadmap_step" and test_meta.get("roadmap_phase"):
+            pass_threshold = float(request.data.get("pass_threshold", 0.75))
+            passed = result["accuracy"] >= pass_threshold
+            if progress_doc:
+                updated_progress = apply_phase_result(
+                    db=db,
+                    progress_doc=progress_doc,
+                    phase_name=test_meta.get("roadmap_phase"),
+                    passed=passed,
+                    test_id=test_doc.get("_id"),
+                    accuracy=result["accuracy"],
+                )
+                phase_result = {
+                    "phase": test_meta.get("roadmap_phase"),
+                    "passed": passed,
+                    "pass_threshold": pass_threshold,
+                    "active_phase": updated_progress.get("active_phase"),
+                }
+
         attempt_doc["_id"] = str(attempt_doc.get("_id", ""))
         return Response({
             "result": {
@@ -132,6 +230,7 @@ class SubmitTestView(APIView):
                 "correct": result["correct"],
                 "skill_stats": result["skill_stats"],
                 "next_difficulty": next_difficulty,
+                "phase_result": phase_result,
             }
         })
 

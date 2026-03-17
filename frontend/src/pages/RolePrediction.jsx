@@ -78,8 +78,8 @@ export default function RolePrediction() {
               placeholder="e.g. python, django, aws"
             />
           </label>
-          <button className="secondary-btn" onClick={() => handlePredict()} disabled={loading} style={{ width: "100%" }}>
-            Predict from list
+          <button className="primary-btn" onClick={() => handlePredict()} disabled={loading} style={{ width: "100%", marginTop: "16px" }}>
+            {loading ? "Processing..." : "Predict from list"}
           </button>
         </div>
       </div>

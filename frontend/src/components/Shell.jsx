@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { clearToken, getToken, api } from "../api/client.js";
+import { clearToken, getToken } from "../api/client.js";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard" },
@@ -12,22 +12,11 @@ const navItems = [
   { path: "/analytics", label: "Analytics" }
 ];
 
-const adminNavItem = { path: "/admin", label: "Admin" };
-
 export default function Shell({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const token = getToken();
-  const [isAdmin, setIsAdmin] = React.useState(false);
   const showNav = !["/login", "/register"].includes(location.pathname);
-
-  React.useEffect(() => {
-    if (token) {
-      api.profile().then(profile => {
-        setIsAdmin(profile.is_staff || profile.role === "Admin");
-      }).catch(() => { });
-    }
-  }, [token]);
 
   const handleLogout = () => {
     clearToken();
@@ -39,9 +28,21 @@ export default function Shell({ children }) {
       {showNav && (
         <aside className="sidebar">
           <div className="logo-block">
-            <div className="logo-mark">SF</div>
+            <div className="logo-mark">
+              <img
+                src="/logo.png"
+                alt="CareerDisha AI logo"
+                className="logo-mark-img"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  const fallback = e.currentTarget.parentElement?.querySelector(".logo-mark-fallback");
+                  if (fallback) fallback.style.display = "grid";
+                }}
+              />
+              <span className="logo-mark-fallback">CD</span>
+            </div>
             <div>
-              <p className="logo-title">SkillForge AI</p>
+              <p className="logo-title">CareerDisha AI</p>
               <p className="logo-sub">Adaptive Assessment</p>
             </div>
           </div>
@@ -57,18 +58,6 @@ export default function Shell({ children }) {
                 {item.label}
               </NavLink>
             ))}
-            {isAdmin && (
-              <NavLink
-                key={adminNavItem.path}
-                to={adminNavItem.path}
-                className={({ isActive }) =>
-                  `nav-link ${isActive ? "active" : ""}`
-                }
-                style={{ borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "8px", paddingTop: "16px" }}
-              >
-                {adminNavItem.label}
-              </NavLink>
-            )}
           </nav>
 
           <div className="auth-actions" style={{ marginTop: "auto", padding: "16px 0" }}>

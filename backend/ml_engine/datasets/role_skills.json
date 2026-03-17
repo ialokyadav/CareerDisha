@@ -9,8 +9,11 @@
   "Machine Learning Engineer": ["python", "scikit-learn", "machine learning", "model deployment"],
   "AI Engineer": ["python", "deep learning", "nlp", "model deployment"],
   "Cloud Engineer": ["aws", "docker", "kubernetes", "cloud"],
+  "Cloud Architect": ["cloud computing", "sql", "python", "java", "cybersecurity", "blockchain", "machine learning", "data analysis"],
   "DevOps Engineer": ["linux", "ci/cd", "docker", "monitoring"],
   "Cyber Security Analyst": ["network security", "vulnerability assessment", "incident response"],
+  "Cybersecurity Expert": ["cybersecurity", "sql", "python", "java", "machine learning", "data analysis", "cloud computing", "blockchain"],
+  "Business Analyst": ["sql", "data analysis", "communication", "excel", "requirements gathering", "stakeholder management", "documentation", "problem-solving"],
   "Mobile App Developer": ["android", "kotlin", "mobile", "ui design"],
   "System Engineer": ["linux", "networks", "scripting", "monitoring"]
 }

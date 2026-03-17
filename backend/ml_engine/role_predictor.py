@@ -20,6 +20,16 @@ ALLOWED_ROLES = [
     "Cyber Security Analyst",
     "Mobile App Developer",
     "System Engineer",
+    # Added from new training data
+    "Java Developer",
+    "Business Analyst",
+    "Project Manager",
+    "Mobile Developer",
+    "PHP Developer",
+    "Python Developer",
+    "QA Engineer",
+    "Database Administrator",
+    "Hadoop Developer",
 ]
 
 BASE_DIR = Path(__file__).resolve().parent

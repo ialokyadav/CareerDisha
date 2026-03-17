@@ -2,10 +2,24 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api, setToken } from "../api/client.js";
 
+const DJANGO_ADMIN_URL = import.meta.env.VITE_DJANGO_ADMIN_URL || "http://127.0.0.1:8000/admin/";
+
 export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
+  const [resetForm, setResetForm] = useState({
+    username: "",
+    email: "",
+    otp: "",
+    new_password: "",
+    confirm_password: "",
+  });
   const [error, setError] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("user"); // 'user' or 'admin'
@@ -21,11 +35,72 @@ export default function Login() {
     try {
       const data = await api.login(form);
       setToken(data.access);
+      try {
+        const profile = await api.profile();
+        const isAdmin = profile?.is_staff || profile?.role === "Admin";
+        if (mode === "admin") {
+          if (isAdmin) {
+            window.location.href = DJANGO_ADMIN_URL;
+            return;
+          }
+          setError("This account is not an admin account.");
+          return;
+        }
+      } catch (_err) {
+        // Fallback to regular app if profile check fails.
+      }
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetChange = (event) => {
+    setResetForm({ ...resetForm, [event.target.name]: event.target.value });
+  };
+
+  const handleRequestOtp = async (event) => {
+    event.preventDefault();
+    setResetError("");
+    setResetMessage("");
+    setResetLoading(true);
+    try {
+      const data = await api.forgotPasswordRequestOtp({
+        username: resetForm.username,
+        email: resetForm.email,
+      });
+      setOtpSent(true);
+      setResetMessage(data?.message || "OTP sent to your email.");
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleVerifyOtpAndResetPassword = async (event) => {
+    event.preventDefault();
+    setResetError("");
+    setResetMessage("");
+    setResetLoading(true);
+    try {
+      const data = await api.forgotPasswordVerifyOtp(resetForm);
+      setResetMessage(data?.message || "Password updated successfully. Please sign in.");
+      setShowForgotPassword(false);
+      setOtpSent(false);
+      setResetForm({
+        username: "",
+        email: "",
+        otp: "",
+        new_password: "",
+        confirm_password: "",
+      });
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -66,6 +141,98 @@ export default function Login() {
                 {loading ? "Signing in..." : "Sign in"}
               </button>
             </form>
+            <button
+              type="button"
+              className="forgot-password-btn"
+              onClick={() => {
+                setError("");
+                setResetError("");
+                setResetMessage("");
+                setOtpSent(false);
+                setShowForgotPassword((prev) => !prev);
+              }}
+            >
+              {showForgotPassword ? "Back to login" : "Forgot password?"}
+            </button>
+            {showForgotPassword && (
+              <>
+                {!otpSent ? (
+                  <form className="form" onSubmit={handleRequestOtp} style={{ marginTop: "12px" }}>
+                    <label>
+                      Username
+                      <input
+                        name="username"
+                        value={resetForm.username}
+                        onChange={handleResetChange}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Registered email
+                      <input
+                        type="email"
+                        name="email"
+                        value={resetForm.email}
+                        onChange={handleResetChange}
+                        required
+                      />
+                    </label>
+                    {resetError && <p className="error">{resetError}</p>}
+                    <button className="secondary-btn" type="submit" disabled={resetLoading}>
+                      {resetLoading ? "Sending OTP..." : "Send OTP"}
+                    </button>
+                  </form>
+                ) : (
+                  <form className="form" onSubmit={handleVerifyOtpAndResetPassword} style={{ marginTop: "12px" }}>
+                    <label>
+                      OTP
+                      <input
+                        name="otp"
+                        value={resetForm.otp}
+                        onChange={handleResetChange}
+                        inputMode="numeric"
+                        pattern="[0-9]{6}"
+                        placeholder="Enter 6-digit OTP"
+                        required
+                      />
+                    </label>
+                    <label>
+                      New password
+                      <input
+                        type="password"
+                        name="new_password"
+                        value={resetForm.new_password}
+                        onChange={handleResetChange}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Confirm new password
+                      <input
+                        type="password"
+                        name="confirm_password"
+                        value={resetForm.confirm_password}
+                        onChange={handleResetChange}
+                        required
+                      />
+                    </label>
+                    {resetError && <p className="error">{resetError}</p>}
+                    <button className="secondary-btn" type="submit" disabled={resetLoading}>
+                      {resetLoading ? "Verifying..." : "Verify OTP & Reset Password"}
+                    </button>
+                    <button
+                      type="button"
+                      className="forgot-password-btn"
+                      onClick={handleRequestOtp}
+                      disabled={resetLoading}
+                    >
+                      {resetLoading ? "Sending..." : "Resend OTP"}
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
+            {resetMessage && <p className="muted">{resetMessage}</p>}
             <p className="muted">
               New here? <Link to="/register">Create an account</Link>
             </p>
@@ -115,7 +282,15 @@ export default function Login() {
       </div>
       <div className="auth-hero">
         <div className="hero-card">
-          <p className="eyebrow">SkillForge AI</p>
+          <img
+            src="/logo.png"
+            alt="CareerDisha AI logo"
+            className="brand-logo"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+          <p className="eyebrow">CareerDisha AI</p>
           <h2>Turn your resume into a role-ready roadmap.</h2>
           <p>Upload, assess, adapt, and track progress with ML-powered insights.</p>
         </div>

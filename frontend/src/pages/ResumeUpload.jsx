@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import SectionHeader from "../components/SectionHeader.jsx";
-import { api } from "../api/client.js";
+import LoginPopup from "../components/LoginPopup.jsx";
+import { api, getToken } from "../api/client.js";
 
 export default function ResumeUpload() {
   const [file, setFile] = useState(null);
@@ -21,19 +22,27 @@ export default function ResumeUpload() {
   const [targetRole, setTargetRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [inputMode, setInputMode] = useState("file"); // 'file', 'text', 'form'
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   useEffect(() => {
     api.listRoles()
       .then(data => {
         setRoles(data.roles);
-        if (data.roles.length > 0) {
-          setTargetRole(data.roles[0]);
-        }
       })
       .catch(err => console.error("Failed to load roles:", err));
   }, []);
 
+  const checkAuth = () => {
+    if (!getToken()) {
+      setShowLoginPopup(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleUpload = async () => {
+    if (!checkAuth()) return;
+
     if (!file) {
       setError("Please select a resume file.");
       return;
@@ -56,6 +65,8 @@ export default function ResumeUpload() {
   };
 
   const handleManual = async () => {
+    if (!checkAuth()) return;
+
     if (!manualText.trim()) {
       setError("Please paste your resume text.");
       return;
@@ -81,6 +92,8 @@ export default function ResumeUpload() {
   };
 
   const handleManualForm = async () => {
+    if (!checkAuth()) return;
+
     if (!manualForm.name && !manualForm.skills && !manualForm.experience) {
       setError("Please fill at least Name, Skills, or Experience.");
       return;
@@ -106,6 +119,13 @@ export default function ResumeUpload() {
         title="Upload your resume for skill extraction"
         subtitle="PDF, DOCX, and TXT supported."
       />
+
+      <LoginPopup
+        isOpen={showLoginPopup}
+        onClose={() => setShowLoginPopup(false)}
+        onLoginSuccess={() => setShowLoginPopup(false)}
+      />
+
       <div className="tab-row">
         <button
           className={`tab-btn ${inputMode === "file" ? "active" : ""}`}

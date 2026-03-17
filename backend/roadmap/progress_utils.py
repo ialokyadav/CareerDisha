@@ -86,3 +86,77 @@ def apply_phase_result(db, progress_doc, phase_name, passed, test_id=None, accur
         )
 
     return progress_doc
+
+
+def _normalize_skill(skill):
+    return str(skill).strip().lower()
+
+
+def apply_skill_results(db, progress_doc, skill_stats, pass_threshold=0.75):
+    """
+    Update granular skill progress using per-skill test stats.
+    - Skill accuracy >= pass_threshold => completed
+    - Skill accuracy < pass_threshold  => in_progress (unless already completed)
+    """
+    if not progress_doc or not isinstance(skill_stats, dict):
+        return progress_doc
+
+    completed = {_normalize_skill(s) for s in progress_doc.get("completed_skills", []) if _normalize_skill(s)}
+    in_progress = {_normalize_skill(s) for s in progress_doc.get("in_progress_skills", []) if _normalize_skill(s)}
+    completed_scores = {
+        _normalize_skill(skill): float(score)
+        for skill, score in (progress_doc.get("completed_skill_scores", {}) or {}).items()
+        if _normalize_skill(skill)
+    }
+    in_progress_scores = {
+        _normalize_skill(skill): float(score)
+        for skill, score in (progress_doc.get("in_progress_skill_scores", {}) or {}).items()
+        if _normalize_skill(skill)
+    }
+
+    changed = False
+    for raw_skill, stats in skill_stats.items():
+        skill = _normalize_skill(raw_skill)
+        if not skill:
+            continue
+
+        total = int((stats or {}).get("total", 0))
+        correct = int((stats or {}).get("correct", 0))
+        if total <= 0:
+            continue
+
+        accuracy = correct / total
+        score_percent = round(accuracy * 100, 1)
+        if accuracy >= float(pass_threshold):
+            if skill not in completed:
+                completed.add(skill)
+                changed = True
+            if completed_scores.get(skill) != score_percent:
+                completed_scores[skill] = score_percent
+                changed = True
+            if skill in in_progress:
+                in_progress.remove(skill)
+                changed = True
+            if skill in in_progress_scores:
+                in_progress_scores.pop(skill, None)
+                changed = True
+        else:
+            if skill not in completed and skill not in in_progress:
+                in_progress.add(skill)
+                changed = True
+            if skill not in completed and in_progress_scores.get(skill) != score_percent:
+                in_progress_scores[skill] = score_percent
+                changed = True
+
+    if changed:
+        update_fields = {
+            "completed_skills": sorted(completed),
+            "in_progress_skills": sorted(in_progress),
+            "completed_skill_scores": completed_scores,
+            "in_progress_skill_scores": in_progress_scores,
+            "updated_at": datetime.utcnow(),
+        }
+        db["roadmap_progress"].update_one({"_id": progress_doc["_id"]}, {"$set": update_fields})
+        progress_doc.update(update_fields)
+
+    return progress_doc

@@ -22,6 +22,7 @@ const ROLE_OPTIONS = [
 export default function TestCenter() {
   const [targetRole, setTargetRole] = useState("Machine Learning Engineer");
   const [skills, setSkills] = useState("");
+  const [testMode, setTestMode] = useState("roadmap_step");
   const [test, setTest] = useState(null);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -33,14 +34,24 @@ export default function TestCenter() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    if (!list.length) {
-      setError("Provide skills to generate a test.");
+
+    if (testMode === "gap_based" && !list.length) {
+      setError("Provide skills to generate a gap-based test.");
       return;
     }
+
     setError("");
     setLoading(true);
     try {
-      const data = await api.generateTest({ target_role: targetRole, skills: list, total_questions: 6 });
+      const payload = {
+        target_role: targetRole,
+        mode: testMode,
+        total_questions: 6,
+      };
+      if ((testMode === "existing_skills" || testMode === "gap_based") && list.length) {
+        payload.skills = list;
+      }
+      const data = await api.generateTest(payload);
       setTest(data);
       setAnswers({});
       setResult(null);
@@ -69,7 +80,7 @@ export default function TestCenter() {
       <SectionHeader
         eyebrow="Adaptive tests"
         title="Generate and complete a personalized test"
-        subtitle="Difficulty adapts based on performance."
+        subtitle="Test by active roadmap step or your existing skills."
       />
       <div className="card">
         <label>
@@ -81,8 +92,24 @@ export default function TestCenter() {
           </select>
         </label>
         <label>
+          Test mode
+          <select value={testMode} onChange={(e) => setTestMode(e.target.value)}>
+            <option value="roadmap_step">Roadmap step test</option>
+            <option value="existing_skills">Existing skills test</option>
+            <option value="gap_based">Gap-based test</option>
+          </select>
+        </label>
+        <label>
           Skills (comma-separated)
-          <input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="python, django, rest" />
+          <input
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            placeholder={
+              testMode === "roadmap_step"
+                ? "optional for roadmap mode"
+                : "python, django, rest"
+            }
+          />
         </label>
         <button className="primary-btn" onClick={handleGenerate} disabled={loading}>
           {loading ? "Generating..." : "Generate test"}
@@ -93,6 +120,10 @@ export default function TestCenter() {
       {test && (
         <div className="card">
           <h3>Test questions</h3>
+          <p className="muted">
+            Mode: {test.mode}
+            {test.roadmap_phase ? ` | Step: ${test.roadmap_phase}` : ""}
+          </p>
           {test.questions.map((q) => (
             <div key={q._id} className="question-block">
               <p>{q.question}</p>
@@ -123,6 +154,15 @@ export default function TestCenter() {
           <h3>Results</h3>
           <p className="big">Accuracy: {(result.accuracy * 100).toFixed(1)}%</p>
           <p className="muted">Next difficulty: {result.next_difficulty}</p>
+          {result.phase_result && (
+            <p className="muted">
+              {result.phase_result.passed
+                ? `Step "${result.phase_result.phase}" passed.`
+                : `Step "${result.phase_result.phase}" not passed.`}
+              {" "}
+              Next active step: {result.phase_result.active_phase || "All steps completed"}.
+            </p>
+          )}
         </div>
       )}
     </div>

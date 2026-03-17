@@ -6,10 +6,11 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 import json
 import subprocess
 from pathlib import Path
+from django.contrib.auth.models import User
 from rest_framework import status
 from common.mongodb import get_db
 from resumes.upload import read_resume_file
-from resumes.parser import parse_resume_text
+from resumes.parser import parse_resume_text, extract_contact_info
 from ml_engine.skill_extractor import predict_skills
 from ml_engine.role_predictor import predict_role
 from ml_engine.skill_gap_analyzer import analyze_skill_gap
@@ -51,6 +52,8 @@ class ResumeUploadView(APIView):
             "raw_text": parsed["raw_text"],
             "cleaned_text": parsed["cleaned_text"],
             "keywords": parsed["keywords"],
+            "contact": parsed.get("contact"),
+            "education": parsed.get("education"),
             "created_at": datetime.utcnow(),
         }
         resume_id = db["resumes"].insert_one(resume_doc).inserted_id
@@ -166,6 +169,26 @@ class SkillGapView(APIView):
 
         performance = get_skill_accuracy_summary(request.user.id)
         gap = analyze_skill_gap(skills, target_role, performance=performance)
+        db["skill_gaps"].insert_one(
+            {
+                "user_id": request.user.id,
+                "target_role": target_role,
+                "skills": [str(s).strip().lower() for s in skills if str(s).strip()],
+                "gap": gap,
+                "created_at": datetime.utcnow(),
+            }
+        )
+        db["users"].update_one(
+            {"user_id": request.user.id},
+            {
+                "$set": {
+                    "last_target_role": target_role,
+                    "last_target_role_updated_at": datetime.utcnow(),
+                },
+                "$setOnInsert": {"created_at": datetime.utcnow()},
+            },
+            upsert=True,
+        )
 
         # Signal: Save as role training data
         db["role_training"].insert_one({
@@ -230,6 +253,8 @@ class ManualResumeTextView(APIView):
             "raw_text": parsed["raw_text"],
             "cleaned_text": parsed["cleaned_text"],
             "keywords": parsed["keywords"],
+            "contact": parsed.get("contact"),
+            "education": parsed.get("education"),
             "created_at": datetime.utcnow(),
         }
         resume_id = db["resumes"].insert_one(resume_doc).inserted_id
@@ -319,6 +344,59 @@ class TrainingStatusView(APIView):
     def get(self, request):
         status = get_training_status()
         return Response(status)
+
+
+class AdminUserContactsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        limit = int(request.query_params.get("limit", 200))
+        limit = max(1, min(limit, 1000))
+
+        db = get_db()
+        users = list(User.objects.all().values("id", "username", "email", "is_staff").order_by("username")[:limit])
+        results = []
+
+        for user in users:
+            latest_resume = db["resumes"].find_one(
+                {"user_id": user["id"]},
+                sort=[("created_at", -1)],
+                projection={"contact": 1, "raw_text": 1, "filename": 1, "created_at": 1},
+            )
+
+            contact = latest_resume.get("contact") if latest_resume else {}
+            if not isinstance(contact, dict):
+                contact = {}
+
+            # Backward compatibility for old resume docs that don't store contact.
+            if latest_resume and (not contact.get("email") or not contact.get("phone")) and latest_resume.get("raw_text"):
+                parsed_contact = extract_contact_info(str(latest_resume.get("raw_text", "")))
+                if not contact.get("email"):
+                    contact["email"] = parsed_contact.get("email")
+                if not contact.get("phone"):
+                    contact["phone"] = parsed_contact.get("phone")
+
+            email = str(contact.get("email", "")).strip()
+            phone = str(contact.get("phone", "")).strip()
+
+            if not email or email == "Not found":
+                email = str(user.get("email") or "").strip() or "Not available"
+            if not phone or phone == "Not found":
+                phone = "Not mentioned in resume"
+
+            results.append(
+                {
+                    "user_id": user["id"],
+                    "username": user["username"],
+                    "is_admin": bool(user["is_staff"]),
+                    "email": email,
+                    "phone": phone,
+                    "resume_filename": latest_resume.get("filename") if latest_resume else None,
+                    "resume_uploaded_at": latest_resume.get("created_at").isoformat() if latest_resume and latest_resume.get("created_at") else None,
+                }
+            )
+
+        return Response({"users": results})
 
 
 class AddManualTrainingDataView(APIView):
@@ -455,6 +533,7 @@ urlpatterns = [
     path("manual-text/", ManualResumeTextView.as_view(), name="manual-text"),
     path("latest-extraction/", LastExtractionView.as_view(), name="latest-extraction"),
     path("training-status/", TrainingStatusView.as_view(), name="training-status"),
+    path("admin-user-contacts/", AdminUserContactsView.as_view(), name="admin-user-contacts"),
     path("add-manual-data/", AddManualTrainingDataView.as_view(), name="add-manual-data"),
     path("engine-config/", EngineConfigView.as_view(), name="engine-config"),
     path("run-tests/", RunSystemTestsView.as_view(), name="run-tests"),
