@@ -6,30 +6,12 @@ from sklearn.ensemble import RandomForestClassifier
 from common.mongodb import get_db
 
 ALLOWED_ROLES = [
-    "Software Developer",
-    "Web Developer",
-    "Backend Developer",
-    "Frontend Developer",
-    "Full Stack Developer",
-    "Data Scientist",
-    "Data Analyst",
-    "Machine Learning Engineer",
-    "AI Engineer",
-    "Cloud Engineer",
-    "DevOps Engineer",
-    "Cyber Security Analyst",
-    "Mobile App Developer",
-    "System Engineer",
+    "Software Developer","Web Developer","Backend Developer", "Frontend Developer","Full Stack Developer",
+    "Data Scientist", "Data Analyst","Machine Learning Engineer","AI Engineer","Cloud Engineer", "DevOps Engineer",
+    "Cyber Security Analyst","Mobile App Developer","System Engineer",
     # Added from new training data
-    "Java Developer",
-    "Business Analyst",
-    "Project Manager",
-    "Mobile Developer",
-    "PHP Developer",
-    "Python Developer",
-    "QA Engineer",
-    "Database Administrator",
-    "Hadoop Developer",
+    "Java Developer","Business Analyst","Project Manager","Mobile Developer","PHP Developer","Python Developer",
+    "QA Engineer","Database Administrator","Hadoop Developer",
 ]
 
 BASE_DIR = Path(__file__).resolve().parent
